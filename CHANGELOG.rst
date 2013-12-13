@@ -5,6 +5,8 @@ These are notable changes in edx-platform.  This is a rolling list of changes,
 in roughly chronological order, most recent first.  Add your entries at or near
 the top.  Include a label indicating the component affected.
 
+Blades: Allow regexp strings as the correct answer to a string response question. BLD-475.
+
 Blades: Video player improvements:
   - Disable edX controls on iPhone/iPod (native controls are used).
   - Disable unsupported controls (volume, playback rate) on iPad/Android.
@@ -93,8 +95,6 @@ inline discussion.
 
 Blades: Allow multiple strings as the correct answer to a string response
 question. BLD-474.
-
-Blades: Allow multiple strings as the correct answer to a string response question. BLD-474.
 
 Blades: a11y - Videos will alert screenreaders when the video is over.
 
