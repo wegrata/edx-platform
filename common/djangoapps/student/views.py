@@ -444,6 +444,14 @@ def change_enrollment(request):
         if not has_access(user, course, 'enroll'):
             return HttpResponseBadRequest(_("Enrollment is closed"))
 
+        # see if we have already filled up all allowed enrollments
+        is_course_full = False
+        if course.max_student_enrollments_allowed:
+            is_course_full = CourseEnrollment.get_number_enrollments_for_course_id(course_id) >= course.max_student_enrollments_allowed
+
+        if is_course_full:
+            return HttpResponseBadRequest(_("Course is full"))
+
         # If this course is available in multiple modes, redirect them to a page
         # where they can choose which mode they want.
         available_modes = CourseMode.modes_for_course(course_id)

@@ -357,6 +357,17 @@ class CourseEnrollment(models.Model):
 
         return enrollment
 
+    @classmethod
+    def get_number_enrollments_for_course_id(cls, course_id):
+        """
+        Returns the count of active enrollments in a course.
+
+        'course_id' is the course_id to return enrollments
+        """
+        enrollment_number = CourseEnrollment.objects.filter(course_id=course_id, is_active=1).count()
+
+        return enrollment_number
+
     def update_enrollment(self, mode=None, is_active=None):
         """
         Updates an enrollment for a user in a class.  This includes options
