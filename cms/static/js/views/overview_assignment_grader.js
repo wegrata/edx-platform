@@ -18,7 +18,9 @@ define(["js/views/baseview", "underscore", "gettext", "js/models/assignment_grad
                         '<% graders.each(function(option) { %>' +
                             '<li><a <% if (option.get("type") == assignmentType) {%>class="is-selected" <%}%> href="#"><%= option.get("type") %></a></li>' +
                         '<% }) %>' +
-                        '<li><a class="gradable-status-notgraded" href="#">Not Graded</a></li>' +
+                        '<li><a class="gradable-status-notgraded" href="#">' +
+                        gettext('Not Graded') +
+                        '</a></li>' +
                     '</ul>');
             this.assignmentGrade = new AssignmentGrade({
                 locator : this.$el.closest('.id-holder').data('locator'),
@@ -36,9 +38,16 @@ define(["js/views/baseview", "underscore", "gettext", "js/models/assignment_grad
             this.render();
         },
         render : function() {
-            this.$el.html(this.template({ assignmentType : this.assignmentGrade.get('graderType'), graders : this.graders,
-                hideSymbol : this.hideSymbol }));
-            if (this.assignmentGrade.has('graderType') && this.assignmentGrade.get('graderType') != "Not Graded") {
+            var assignmentGrade = this.assignmentGrade.get('graderType');
+            this.$el.html(this.template(
+                {
+                    assignmentType : ((assignmentGrade == null) ? gettext("Not Graded") : assignmentGrade),
+                    graders : this.graders,
+                    hideSymbol : this.hideSymbol
+                }
+            ));
+
+            if (this.assignmentGrade.has('graderType') && this.assignmentGrade.get('graderType') !== null) {
                 this.$el.addClass('is-set');
             }
             else {
@@ -63,11 +72,13 @@ define(["js/views/baseview", "underscore", "gettext", "js/models/assignment_grad
                   });
                   saving.show();
 
-              // TODO I'm not happy with this string fetch via the html for what should be an id. I'd rather use the id attr
-              // of the CourseGradingPolicy model or null for Not Graded (NOTE, change template's if check for is-selected accordingly)
+              // TODO I'm not happy with this string fetch via the html
+              // for what should be an id. I'd rather use the id attr
+              // of the CourseGradingPolicy model
+              // (NOTE, change template's if check for is-selected accordingly)
               this.assignmentGrade.save(
                       'graderType',
-                      $(e.target).text(),
+                      ($(e.target).attr('class') == "gradable-status-notgraded") ? null : $(e.target).text(),
                       {success: function () { saving.hide(); }}
                   );
 

@@ -31,7 +31,7 @@ from django.http import HttpResponseBadRequest
 from xblock.fields import Scope
 from preview import handler_prefix, get_preview_html
 from edxmako.shortcuts import render_to_response, render_to_string
-from models.settings.course_grading import CourseGradingModel
+from models.settings.course_grading import CourseGradingModel, GRADER_NOT_SUPPLIED
 
 __all__ = ['orphan_handler', 'xblock_handler']
 
@@ -126,7 +126,7 @@ def xblock_handler(request, tag=None, package_id=None, branch=None, version_guid
                 children=request.json.get('children'),
                 metadata=request.json.get('metadata'),
                 nullout=request.json.get('nullout'),
-                grader_type=request.json.get('graderType'),
+                grader_type=request.json.get('graderType', GRADER_NOT_SUPPLIED),
                 publish=request.json.get('publish'),
             )
     elif request.method in ('PUT', 'POST'):
@@ -139,7 +139,7 @@ def xblock_handler(request, tag=None, package_id=None, branch=None, version_guid
 
 
 def _save_item(request, usage_loc, item_location, data=None, children=None, metadata=None, nullout=None,
-               grader_type=None, publish=None):
+               grader_type=GRADER_NOT_SUPPLIED, publish=None):
     """
     Saves xblock w/ its fields. Has special processing for grader_type, publish, and nullout and Nones in metadata.
     nullout means to truly set the field to None whereas nones in metadata mean to unset them (so they revert
@@ -224,7 +224,7 @@ def _save_item(request, usage_loc, item_location, data=None, children=None, meta
         'metadata': own_metadata(existing_item)
     }
 
-    if grader_type is not None:
+    if grader_type != GRADER_NOT_SUPPLIED:
         result.update(CourseGradingModel.update_section_grader_type(existing_item, grader_type))
 
     # Make public after updating the xblock, in case the caller asked

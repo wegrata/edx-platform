@@ -3,6 +3,15 @@ from contentstore.utils import get_modulestore
 from xmodule.modulestore.django import loc_mapper
 from xblock.fields import Scope
 
+# Defining this global variable to distinguish between items that are
+# not graded and items for which no grading paradigm is supplied
+# None implies that the item is specified as "Not Graded";
+# GRADER_NOT_SUPPLIED implies the item has no grading specification.
+# It is set at -1 to distinguish it by type from other grading types,
+# which are strings, to avoid accidental namespace collision.
+# This is not the most elegant implementation, but is needed for i18n.
+GRADER_NOT_SUPPLIED = -1
+
 
 class CourseGradingModel(object):
     """
@@ -43,13 +52,14 @@ class CourseGradingModel(object):
 
         # return empty model
         else:
-            return {"id": index,
-                    "type": "",
-                    "min_count": 0,
-                    "drop_count": 0,
-                    "short_label": None,
-                    "weight": 0
-                    }
+            return {
+                "id": index,
+                "type": "",
+                "min_count": 0,
+                "drop_count": 0,
+                "short_label": None,
+                "weight": 0
+            }
 
     @staticmethod
     def update_from_json(course_locator, jsondict):
@@ -173,13 +183,13 @@ class CourseGradingModel(object):
         old_location = loc_mapper().translate_locator_to_location(location)
         descriptor = get_modulestore(old_location).get_item(old_location)
         return {
-            "graderType": descriptor.format if descriptor.format is not None else 'Not Graded',
+            "graderType": descriptor.format,
             "location": unicode(location),
         }
 
     @staticmethod
     def update_section_grader_type(descriptor, grader_type):
-        if grader_type is not None and grader_type != u"Not Graded":
+        if grader_type is not None and grader_type != GRADER_NOT_SUPPLIED:
             descriptor.format = grader_type
             descriptor.graded = True
         else:
