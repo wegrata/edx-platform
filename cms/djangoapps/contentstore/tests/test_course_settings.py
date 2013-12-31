@@ -312,7 +312,7 @@ class CourseGradingTest(CourseTestCase):
         descriptor = get_modulestore(self.course.location).get_item(self.course.location)
         section_grader_type = CourseGradingModel.get_section_grader_type(self.course_locator)
 
-        self.assertEqual('Not Graded', section_grader_type['graderType'])
+        self.assertEqual(None, section_grader_type['graderType'])
         self.assertEqual(None, descriptor.format)
         self.assertEqual(False, descriptor.graded)
 
@@ -325,12 +325,12 @@ class CourseGradingTest(CourseTestCase):
         self.assertEqual('Homework', descriptor.format)
         self.assertEqual(True, descriptor.graded)
 
-        # Change the grader type back to Not Graded, which should also unmark the section as graded
-        CourseGradingModel.update_section_grader_type(self.course, 'Not Graded')
+        # Change the grader type back to None (Not Graded), which should also unmark the section as graded
+        CourseGradingModel.update_section_grader_type(self.course, None)
         descriptor = get_modulestore(self.course.location).get_item(self.course.location)
         section_grader_type = CourseGradingModel.get_section_grader_type(self.course_locator)
 
-        self.assertEqual('Not Graded', section_grader_type['graderType'])
+        self.assertEqual(None, section_grader_type['graderType'])
         self.assertEqual(None, descriptor.format)
         self.assertEqual(False, descriptor.graded)
 
