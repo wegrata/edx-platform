@@ -10,6 +10,8 @@ from course_modes.models import CourseMode
 from shoppingcart.models import CertificateItem, OrderItem
 from student.models import CourseEnrollment
 from util.query import use_read_replica_if_available
+from xmodule.error_module import ErrorDescriptor
+from xmodule.modulestore.django import modulestore
 
 
 class Report(object):
@@ -246,7 +248,7 @@ def course_ids_between(start_word, end_word):
     These comparisons are unicode-safe. 
     """
     valid_courses = []
-    for course_id in settings.COURSE_LISTINGS['default']:
-        if (start_word.lower() <= course_id.lower() <= end_word.lower()) and (get_course_by_id(course_id) is not None):
-            valid_courses.append(course_id)
+    for course in modulestore().get_courses():
+        if (start_word.lower() <= course.id.lower() <= course.id.lower()) and (get_course_by_id(course.id) is not None):
+            valid_courses.append(course.id)
     return valid_courses
