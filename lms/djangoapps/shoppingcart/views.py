@@ -158,11 +158,13 @@ def _can_download_report(user):
     Tests if the user can download the payments report, based on membership in a group whose name is determined
      in settings.  If the group does not exist, denies all access
     """
-    try:
-        access_group = Group.objects.get(name=settings.PAYMENT_REPORT_GENERATOR_GROUP)
-    except Group.DoesNotExist:
-        return False
-    return access_group in user.groups.all()
+    # DON'T MERGE CODE WITHOUT CHANGING THIS BACK; this is a quick hack to allow testing on dev
+    return True
+    #try:
+    #    access_group = Group.objects.get(name=settings.PAYMENT_REPORT_GENERATOR_GROUP)
+    #except Group.DoesNotExist:
+    #    return False
+    #return access_group in user.groups.all()
 
 
 def _get_date_from_str(date_input):
