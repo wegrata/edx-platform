@@ -5,10 +5,16 @@ from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
+import settings
 from certificates.models import certificate_status_for_student, CertificateStatuses, GeneratedCertificate
 from certificates.queue import XQueueCertInterface
 from xmodule.course_module import CourseDescriptor
 from xmodule.modulestore.django import modulestore
+
+from student.models import UserProfile
+CmeUserProfile = False
+if settings.MITX_FEATURES.get('USE_CME_REGISTRATION', False):
+    from cme_registration.models import CmeUserProfile
 
 
 logger = logging.getLogger(__name__)
@@ -17,7 +23,7 @@ logger = logging.getLogger(__name__)
 @csrf_exempt
 def request_certificate(request):
     """Request the on-demand creation of a certificate for some user, course.
-    
+
     A request doesn't imply a guarantee that such a creation will take place.
     We intentionally use the same machinery as is used for doing certification
     at the end of a course run, so that we can be sure users get graded and
@@ -27,14 +33,18 @@ def request_certificate(request):
         if request.user.is_authenticated():
             xq         = XQueueCertInterface()
             username   = request.user.username
-            course_id  = request.POST.get('course_id')
             student    = User.objects.get(username=username)
+            course_id  = request.POST.get('course_id')
             course     = modulestore().get_instance(course_id, CourseDescriptor.id_to_location(course_id), depth=2)
+            special_selector = None
+            userprofile_dict = UserProfile.objects.get(user=student).values()[0]
+            if CmeUserProfile:
+                userprofile_dict.update(CmeUserProfile.objects.get(user=student).values()[0])
 
             status = certificate_status_for_student(student, course_id)['status']
             if status in [CertificateStatuses.unavailable, CertificateStatuses.notpassing, CertificateStatuses.error]:
                 # TODO: make xq.add_cert into async celery job w/o return so grading pushes off to util boxen
-                status = xq.add_cert(student, course_id, course=course)
+                status = xq.add_cert(student, course_id, course=course, userprofile=userprofile_dict)
             return HttpResponse(json.dumps({'add_status': status}), mimetype='application/json')
         return HttpResponse(json.dumps({'add_status': 'ERRORANONYMOUSUSER'}), mimetype='application/json')
 
