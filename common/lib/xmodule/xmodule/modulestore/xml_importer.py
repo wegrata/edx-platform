@@ -380,10 +380,18 @@ def import_course_draft(
 
     # create a new 'System' object which will manage the importing
     errorlog = make_error_tracker()
+
+    # The course_dir as passed to ImportSystem is expected to just be relative, not
+    # the complete path including data_dir. ImportSystem will concatenate the two together.
+    data_dir = xml_module_store.data_dir
+    # Whether or not data_dir ends with a "/" differs in production vs. test.
+    if not data_dir.endswith("/"):
+        data_dir += "/"
+    draft_course_dir = draft_dir.replace(data_dir, '', 1)
     system = ImportSystem(
         xmlstore=xml_module_store,
         course_id=target_location_namespace.course_id,
-        course_dir=draft_dir,
+        course_dir=draft_course_dir,
         policy={},
         error_tracker=errorlog.tracker,
         parent_tracker=ParentTracker(),
@@ -392,6 +400,10 @@ def import_course_draft(
 
     # now walk the /vertical directory where each file in there
     # will be a draft copy of the Vertical
+
+    # First it is necessary to order the draft items by their desired index in the child list
+    # (order os.walk returns them in is not guaranteed).
+    drafts = dict()
     for dirname, dirnames, filenames in os.walk(draft_dir + "/vertical"):
         for filename in filenames:
             module_path = os.path.join(dirname, filename)
@@ -433,39 +445,6 @@ def import_course_draft(
 
                     descriptor = system.process_xml(xml)
 
-                    def _import_module(module):
-                        module.location = module.location._replace(revision='draft')
-                        # make sure our parent has us in its list of children
-                        # this is to make sure private only verticals show up
-                        # in the list of children since they would have been
-                        # filtered out from the non-draft store export
-                        if module.location.category == 'vertical':
-                            non_draft_location = module.location._replace(revision=None)
-                            sequential_url = module.xml_attributes['parent_sequential_url']
-                            index = int(module.xml_attributes['index_in_children_list'])
-
-                            seq_location = Location(sequential_url)
-
-                            # IMPORTANT: Be sure to update the sequential
-                            # in the NEW namespace
-                            seq_location = seq_location._replace(
-                                org=target_location_namespace.org,
-                                course=target_location_namespace.course
-                            )
-                            sequential = store.get_item(seq_location, depth=0)
-
-                            if non_draft_location.url() not in sequential.children:
-                                sequential.children.insert(index, non_draft_location.url())
-                                store.update_children(sequential.location, sequential.children)
-
-                        import_module(
-                            module, draft_store, course_data_path,
-                            static_content_store, source_location_namespace,
-                            target_location_namespace, allow_not_found=True
-                        )
-                        for child in module.get_children():
-                            _import_module(child)
-
                     # HACK: since we are doing partial imports of drafts
                     # the vertical doesn't have the 'url-name' set in the
                     # attributes (they are normally in the parent object,
@@ -474,12 +453,56 @@ def import_course_draft(
                     fn, fileExtension = os.path.splitext(filename)
                     descriptor.location = descriptor.location._replace(name=fn)
 
-                    _import_module(descriptor)
+                    index = int(descriptor.xml_attributes['index_in_children_list'])
+                    drafts[index] = descriptor
 
                 except Exception, e:
                     logging.exception('There was an error. {err}'.format(
                         err=unicode(e)
                     ))
+
+        for key in sorted(drafts.iterkeys()):
+            descriptor = drafts[key]
+            try:
+                def _import_module(module):
+                    module.location = module.location._replace(revision='draft')
+                    # make sure our parent has us in its list of children
+                    # this is to make sure private only verticals show up
+                    # in the list of children since they would have been
+                    # filtered out from the non-draft store export
+                    if module.location.category == 'vertical':
+                        non_draft_location = module.location._replace(revision=None)
+                        sequential_url = module.xml_attributes['parent_sequential_url']
+                        index = int(module.xml_attributes['index_in_children_list'])
+
+                        seq_location = Location(sequential_url)
+
+                        # IMPORTANT: Be sure to update the sequential
+                        # in the NEW namespace
+                        seq_location = seq_location._replace(
+                            org=target_location_namespace.org,
+                            course=target_location_namespace.course
+                        )
+                        sequential = store.get_item(seq_location, depth=0)
+
+                        if non_draft_location.url() not in sequential.children:
+                            sequential.children.insert(index, non_draft_location.url())
+                            store.update_children(sequential.location, sequential.children)
+
+                    import_module(
+                        module, draft_store, course_data_path,
+                        static_content_store, source_location_namespace,
+                        target_location_namespace, allow_not_found=True
+                    )
+                    for child in module.get_children():
+                        _import_module(child)
+
+                _import_module(descriptor)
+
+            except Exception, e:
+                logging.exception('There was an error. {err}'.format(
+                    err=unicode(e)
+                ))
 
 
 def remap_namespace(module, target_location_namespace):
