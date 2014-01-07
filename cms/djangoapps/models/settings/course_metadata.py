@@ -17,7 +17,6 @@ class CourseMetadata(object):
                      'end',
                      'enrollment_start',
                      'enrollment_end',
-                     'tabs',
                      'graceperiod',
                      'checklists',
                      'show_timezone',
