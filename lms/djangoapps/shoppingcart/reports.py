@@ -247,6 +247,7 @@ def course_ids_between(start_word, end_word):
     Returns a list of all valid course_ids that fall alphabetically between start_word and end_word.
     These comparisons are unicode-safe. 
     """
+    
     valid_courses = []
     for course in modulestore().get_courses():
         if (start_word.lower() <= course.id.lower() <= course.id.lower()) and (get_course_by_id(course.id) is not None):
