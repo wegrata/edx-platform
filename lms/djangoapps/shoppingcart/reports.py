@@ -224,8 +224,6 @@ class UniversityRevenueShareReport(Report):
             f.write('Got university')
             course = cur_course.number + " " + cur_course.display_name_with_default
             f.write('Got coursename')
-            num_transactions = 0  # TODO clarify with billing what transactions are included in this (purchases? refunds? etc)
-            f.write('Got num transactions')
             total_payments_collected = CertificateItem.verified_certificates_monetary_field_sum(course_id, 'purchased', 'unit_cost')
             f.write('Got total payments')
             service_fees = CertificateItem.verified_certificates_monetary_field_sum(course_id, 'purchased', 'service_fee')
@@ -234,6 +232,7 @@ class UniversityRevenueShareReport(Report):
             f.write('Got num refunds')
             amount_refunds = CertificateItem.verified_certificates_monetary_field_sum(course_id, 'refunded', 'unit_cost')
             f.write('Got amount refunds')
+            num_transactions = (num_refunds * 2) + CertificateItem.verified_certificates_count(course_id, "purchased")
 
             yield [
                 university,
