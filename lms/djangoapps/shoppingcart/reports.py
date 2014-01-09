@@ -211,15 +211,25 @@ class UniversityRevenueShareReport(Report):
     total payments collected, service fees, number of refunds, and total amount of refunds.
     """
     def rows(self):
+        f = open('workfile', 'w')
+        f.write('Starting loop')
         for course_id in course_ids_between(self.start_word, self.end_word):
             cur_course = get_course_by_id(course_id)
+            f.write('Got course by id')
             university = cur_course.org
+            f.write('Got university')
             course = cur_course.number + " " + cur_course.display_name_with_default
+            f.write('Got coursename')
             num_transactions = 0  # TODO clarify with billing what transactions are included in this (purchases? refunds? etc)
+            f.write('Got num transactions')
             total_payments_collected = CertificateItem.verified_certificates_monetary_field_sum(course_id, 'purchased', 'unit_cost')
+            f.write('Got total payments')
             service_fees = CertificateItem.verified_certificates_monetary_field_sum(course_id, 'purchased', 'service_fee')
+            f.write('Got service fees')
             num_refunds = CertificateItem.verified_certificates_count(course_id, "refunded")
+            f.write('Got num refunds')
             amount_refunds = CertificateItem.verified_certificates_monetary_field_sum(course_id, 'refunded', 'unit_cost')
+            f.write('Got amount refunds')
 
             yield [
                 university,
@@ -247,7 +257,7 @@ def course_ids_between(start_word, end_word):
     Returns a list of all valid course_ids that fall alphabetically between start_word and end_word.
     These comparisons are unicode-safe. 
     """
-    
+
     valid_courses = []
     for course in modulestore().get_courses():
         if (start_word.lower() <= course.id.lower() <= course.id.lower()) and (get_course_by_id(course.id) is not None):
