@@ -196,6 +196,8 @@ def csv_report(request):
     Downloads csv reporting of orderitems
     """
 
+    f = open('yolo', 'w')
+    f.write('PONIES')
     if not _can_download_report(request.user):
         return HttpResponseForbidden(_('You do not have permission to view this page.'))
 
