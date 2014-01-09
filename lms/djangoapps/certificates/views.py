@@ -4,8 +4,8 @@ import logging
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 
-import settings
 from certificates.models import certificate_status_for_student, CertificateStatuses, GeneratedCertificate
 from certificates.queue import XQueueCertInterface
 from xmodule.course_module import CourseDescriptor
