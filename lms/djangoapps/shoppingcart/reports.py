@@ -164,7 +164,9 @@ class CertificateStatusReport(Report):
             else:
                 verified_enrolled = counts['verified']
                 gross_rev = CertificateItem.verified_certificates_monetary_field_sum(course_id, 'purchased', 'unit_cost')
-                gross_rev_over_min = gross_rev - (CourseMode.min_course_price_for_currency(course_id, 'usd') * verified_enrolled)
+                gross_rev_over_min = gross_rev - (CourseMode.min_course_price_for_verified_for_currency(course_id, 'usd') * verified_enrolled)
+
+            num_verified_over_the_minimum = CertificateItem.verified_certificates_contributing_more_than_minimum(course_id)
 
             # should I be worried about is_active here?
             number_of_refunds = CertificateItem.verified_certificates_count(course_id, 'refunded')
@@ -182,6 +184,7 @@ class CertificateStatusReport(Report):
                 verified_enrolled,
                 gross_rev,
                 gross_rev_over_min,
+                num_verified_over_the_minimum,
                 number_of_refunds,
                 dollars_refunded
             ]
@@ -196,6 +199,7 @@ class CertificateStatusReport(Report):
             _("Verified Enrollment"),
             _("Gross Revenue"),
             _("Gross Revenue over the Minimum"),
+            _("Number of Verified Students Contributing More than the Minimum"),
             _("Number of Refunds"),
             _("Dollars Refunded"),
         ]
